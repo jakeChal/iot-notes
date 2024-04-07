@@ -1,0 +1,1 @@
+A nice way to inspect/debug MQTT traffic with a UI is the [MQTT Explorer](https://mqtt-explorer.com/)
