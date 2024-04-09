@@ -19,6 +19,7 @@ def connect_mqtt(broker, port, client_id, username, password):
             print("Failed to connect, return code %d\n", rc)
 
     client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION2, client_id)
+    client.tls_set(tls_version=mqtt_client.ssl.PROTOCOL_TLS)
     client.username_pw_set(username, password)
     client.on_connect = on_connect
     client.connect(broker, port)

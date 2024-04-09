@@ -1,6 +1,22 @@
-# Mosquitto MQTT Broker (using docker)
+# How setup an MQTT broker
 
-## Setup
+## Cloud hosting
+This is the easiest/hassle-free setup. There are several options for providers. One of the most used ones is HiveMQ, which we'll be convering here:
+
+#### Setup
+1. Register: https://console.hivemq.cloud
+2. Bring up an AWS broker instance (with the free plan, you can get 100 MQTT clients & 10 GB traffic/month)
+3. In the "OVERVIEW" you can check your broker's config (URL, ports...)
+4. In the "ACCESS MANAGEMENT" you can create MQTT client credentials.
+
+#### Testing
+You can test your broker using e.g. MQTT Explorer or the [HiveMQ websocket client](https://www.hivemq.com/demos/websocket-client/).
+
+## Local (on premises) hosting
+
+### Mosquitto MQTT Broker (using docker)
+
+#### Setup
 These instructions will work on any Debian based OS  
 
 _By default the config allows only to use local connections for security reasons but since authentication is enabled below, that's not the case._
@@ -64,7 +80,7 @@ mosquitto_passwd -D /mosquitto/config/pwfile <user-name-to-delete>
 sudo docker restart <container-id>
 ```
 
-## Testing
+#### Testing
 
 You can test using a dummy client on the MQTT server.
 
