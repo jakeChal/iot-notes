@@ -2,10 +2,15 @@ import random
 import argparse
 import RPi.GPIO as GPIO
 from paho.mqtt import client as mqtt_client
+import re
+import json
 
 # Control a GPIO pin via MQTT
 
 GPIO_PIN = 17
+
+def assert_valid_topic(topic):
+    assert re.match(r'^[a-zA-Z0-9]+/rx$', topic), "Topic format should be 'ID/rx' where ID is alphanumeric"
 
 def setup_gpio(led_pin):
     GPIO.setmode(GPIO.BCM)
@@ -34,6 +39,11 @@ def subscribe(client: mqtt_client, topic, led_pin):
         elif msg_payload == "off":
             GPIO.output(led_pin, GPIO.LOW)  # Turn LED off
 
+        # Device control implies request/response semantics
+        # So we acknowledge the message by sending a response
+        pub_topic = f"{msg.topic[:-3]}/tx"
+        client.publish(pub_topic, "ΟΚ")
+        
     client.subscribe(topic)
     client.on_message = on_message
 
@@ -49,15 +59,42 @@ def run(broker, port, client_id, username, password, topic):
         client.disconnect()
 
 
-if __name__ == '__main__':
+def parse_args():
     parser = argparse.ArgumentParser(description='MQTT Client Arguments')
-    parser.add_argument('--broker', type=str, required=True, help='MQTT broker address')
+    parser.add_argument('--config', type=str, help='Path to configuration file')
+    parser.add_argument('--broker', type=str, help='MQTT broker address')
     parser.add_argument('--port', type=int, default=1883, help='MQTT broker port (default: 1883)')
-    parser.add_argument('--username', type=str, required=True, help='MQTT username')
-    parser.add_argument('--password', type=str, required=True, help='MQTT password')
-    parser.add_argument('--topic', type=str, required=True, help='MQTT topic to subscribe to')
+    parser.add_argument('--username', type=str, help='MQTT username')
+    parser.add_argument('--password', type=str, help='MQTT password')
+    parser.add_argument('--topic', type=str, help='MQTT topic to subscribe to (of the form: ID/rx)')
     args = parser.parse_args()
 
+    if args.config:
+        config = load_config(args.config)
+        args.broker = config.get('broker', args.broker)
+        args.port = config.get('port', args.port)
+        args.username = config.get('username', args.username)
+        args.password = config.get('password', args.password)
+        args.topic = config.get('topic', args.topic)
+
+    return args
+
+def load_config(config_file):
+    with open(config_file, 'r') as f:
+        return json.load(f)
+
+if __name__ == '__main__':
+    args = parse_args()
+
+    assert_valid_topic(args.topic)
     client_id = f'python-mqtt-{random.randint(0, 1000)}'
+
+    # Debug
+    print("Broker:", args.broker)
+    print("Port:", args.port)
+    print("Username:", args.username)
+    print("Password:", args.password)
+    print("Topic:", args.topic)
+    print("Client ID:", client_id)
 
     run(args.broker, args.port, client_id, args.username, args.password, args.topic)
